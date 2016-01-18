@@ -5,7 +5,6 @@ module Mongoid
     # The "Grand Poobah" of information about any relation is this class. It
     # contains everything you could ever possible want to know.
     class Metadata < Hash
-
       delegate :foreign_key_default, :stores_foreign_key?, to: :relation
 
       # Returns the as option of the relation.
@@ -369,9 +368,14 @@ module Mongoid
       # @param [ Hash ] properties The relation options.
       #
       # @since 2.0.0.rc.1
-      def initialize(properties = {})
+      def initialize(*args)
+        properties = args.last.is_a?(::Hash) ? args.pop : {}
+        scope = args.first
+
         Options.validate!(properties)
         merge!(properties)
+
+        @scope = scope
       end
 
       # Since a lot of the information from the metadata is inferred and not
@@ -398,6 +402,7 @@ module Mongoid
   order:        #{order.inspect}
   polymorphic:  #{polymorphic?}
   relation:     #{relation}
+  scoped:       #{scoped?}
   setter:       #{setter}
   versioned:    #{versioned?}>
 }
@@ -755,6 +760,15 @@ module Mongoid
       # @since 2.1.0
       def relation
         self[:relation]
+      end
+
+      def scope?
+        @scope.present?
+      end
+
+      def scope
+        return klass.criteria unless scope?
+        @scope.respond_to?(:call) ? klass.instance_exec(&@scope) : @scope
       end
 
       # Gets the method name used to set this relation.

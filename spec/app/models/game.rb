@@ -4,6 +4,7 @@ class Game
   field :high_score, type: Integer, default: 500
   field :score, type: Integer, default: 0
   field :name
+  field :favorite, type: Boolean, default: false
 
   belongs_to :person, index: true, validate: true
   belongs_to :parent, class_name: "Game", foreign_key: "parent-id"

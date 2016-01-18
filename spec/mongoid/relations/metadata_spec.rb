@@ -2027,4 +2027,17 @@ describe Mongoid::Relations::Metadata do
     end
   end
 
+  describe '#scope' do
+    let(:proc){ -> { where(favorite: true) } }
+
+    let(:metadata) do
+      described_class.new(
+        proc,
+        relation: Mongoid::Relations::Referenced::One
+      )
+    end
+
+    it{ expect(metadata.scope?).to be_truthy }
+  end
+
 end

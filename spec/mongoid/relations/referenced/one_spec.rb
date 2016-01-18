@@ -878,6 +878,26 @@ describe Mongoid::Relations::Referenced::One do
         end
       end
     end
+
+
+    context 'when the relation has a scope' do
+
+      let!(:person) do
+        Person.create
+      end
+
+      let!(:favorite_game) do
+        person.build_favorite_game(name: 'xyz')
+      end
+
+      it 'sets the scope variables on the document' do
+        expect(favorite_game.favorite).to be_truthy
+      end
+
+      it 'sets the specified attributes on the document' do
+        expect(favorite_game.name).to eq 'xyz'
+      end
+    end
   end
 
   describe ".builder" do
@@ -1035,6 +1055,25 @@ describe Mongoid::Relations::Referenced::One do
         rating.should be_persisted
       end
     end
+
+    context 'when the relation has a scope' do
+
+      let!(:person) do
+        Person.create
+      end
+
+      let!(:favorite_game) do
+        person.create_favorite_game(name: 'xyz')
+      end
+
+      it 'persists the scope variables on the document' do
+        expect(person.favorite_game(true).favorite).to be_truthy
+      end
+
+      it 'persists the specified attributes on the document' do
+        expect(person.favorite_game(true).name).to eq 'xyz'
+      end
+    end
   end
 
   describe ".criteria" do
@@ -1076,6 +1115,21 @@ describe Mongoid::Relations::Referenced::One do
 
       it "does not include the type in the criteria" do
         criteria.selector.should eq({ "person_id" => id })
+      end
+    end
+
+    context 'when the relation has a scope' do
+
+      let(:metadata) do
+        Person.relations['favorite_game']
+      end
+
+      let(:criteria) do
+        described_class.criteria(metadata, id, Person)
+      end
+
+      it 'includes the scoped criteria' do
+        criteria.selector.should eq({ 'person_id' => id, 'favorite' => true })
       end
     end
   end

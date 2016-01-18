@@ -81,6 +81,8 @@ class Person
     end
   end
 
+  has_one :favorite_game, -> { where(favorite: true) }, class_name: 'Game'
+
   has_many \
     :posts,
     dependent: :delete,

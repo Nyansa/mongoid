@@ -15,8 +15,8 @@ module Mongoid
       # @return [ Document ] A non-persisted document.
       #
       # @since 2.0.0
-      def build(attrs = {}, &block)
-        create_document(:new, attrs, &block)
+      def build(attrs = {}, options = {}, &block)
+        create_document(:new, attrs, options, &block)
       end
       alias :new :build
 
@@ -32,8 +32,8 @@ module Mongoid
       # @return [ Document ] A newly created document.
       #
       # @since 2.0.0.rc.1
-      def create(attrs = {}, &block)
-        create_document(:create, attrs, &block)
+      def create(attrs = {}, options = {}, &block)
+        create_document(:create, attrs, options, &block)
       end
 
       # Create a document in the database given the selector and return it.
@@ -51,8 +51,8 @@ module Mongoid
       # @return [ Document ] A newly created document.
       #
       # @since 3.0.0
-      def create!(attrs = {}, &block)
-        create_document(:create!, attrs, &block)
+      def create!(attrs = {}, options = {}, &block)
+        create_document(:create!, attrs, options, &block)
       end
 
       # Find the first +Document+ given the conditions, or creates a new document
@@ -64,8 +64,8 @@ module Mongoid
       # @param [ Hash ] attrs The attributes to check.
       #
       # @return [ Document ] A matching or newly created document.
-      def find_or_create_by(attrs = {}, &block)
-        find_or(:create, attrs, &block)
+      def find_or_create_by(attrs = {}, options = {}, &block)
+        find_or(:create, attrs, options, &block)
       end
 
       # Find the first +Document+ given the conditions, or initializes a new document
@@ -77,8 +77,8 @@ module Mongoid
       # @param [ Hash ] attrs The attributes to check.
       #
       # @return [ Document ] A matching or newly initialized document.
-      def find_or_initialize_by(attrs = {}, &block)
-        find_or(:new, attrs, &block)
+      def find_or_initialize_by(attrs = {}, options = {}, &block)
+        find_or(:new, attrs, options, &block)
       end
 
       # Find the first +Document+, or creates a new document
@@ -92,8 +92,8 @@ module Mongoid
       # @return [ Document ] A matching or newly created document.
       #
       # @since 3.1.0
-      def first_or_create(attrs = nil, &block)
-        first_or(:create, attrs, &block)
+      def first_or_create(attrs = nil, options = nil, &block)
+        first_or(:create, attrs, options, &block)
       end
 
       # Find the first +Document+, or creates a new document
@@ -108,8 +108,8 @@ module Mongoid
       # @return [ Document ] A matching or newly created document.
       #
       # @since 3.1.0
-      def first_or_create!(attrs = nil, &block)
-        first_or(:create!, attrs, &block)
+      def first_or_create!(attrs = nil, options = nil, &block)
+        first_or(:create!, attrs, options, &block)
       end
 
       # Find the first +Document+, or initializes a new document
@@ -123,8 +123,8 @@ module Mongoid
       # @return [ Document ] A matching or newly initialized document.
       #
       # @since 3.1.0
-      def first_or_initialize(attrs = nil, &block)
-        first_or(:new, attrs, &block)
+      def first_or_initialize(attrs = nil, options = nil, &block)
+        first_or(:new, attrs, options, &block)
       end
 
       private
@@ -143,14 +143,14 @@ module Mongoid
       # @return [ Document ] The new or saved document.
       #
       # @since 3.0.0
-      def create_document(method, attrs = nil, &block)
+      def create_document(method, attrs = nil, options = {}, &block)
         klass.__send__(method,
           selector.reduce(attrs || {}) do |hash, (key, value)|
             unless key.to_s =~ /\$/ || value.is_a?(Hash)
               hash[key] = value
             end
             hash
-          end, &block)
+          end, options, &block)
       end
 
       # Find the first object or create/initialize it.
@@ -164,8 +164,8 @@ module Mongoid
       # @param [ Hash ] attrs The attributes to query or set.
       #
       # @return [ Document ] The first or new document.
-      def find_or(method, attrs = {}, &block)
-        where(attrs).first || send(method, attrs, &block)
+      def find_or(method, attrs = {}, options = {}, &block)
+        where(attrs).first || send(method, attrs, options, &block)
       end
 
       # Find the first document or create/initialize it.
@@ -181,8 +181,8 @@ module Mongoid
       # @return [ Document ] The first or new document.
       #
       # @since 3.1.0
-      def first_or(method, attrs = {}, &block)
-        first || create_document(method, attrs, &block)
+      def first_or(method, attrs = {}, options = {}, &block)
+        first || create_document(method, attrs, options, &block)
       end
     end
   end
