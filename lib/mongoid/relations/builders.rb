@@ -49,6 +49,16 @@ module Mongoid
         [ args.first || {}, args.size > 1 ? args[1] : {} ]
       end
 
+      def build_document(metadata, *args)
+        attributes, options = parse_args(*args)
+
+        if metadata.relation.respond_to?(:criteria)
+          metadata.criteria(id, metadata.klass).build(attributes, options)
+        else
+          Factory.build(metadata.klass, attributes, options)
+        end
+      end
+
       module ClassMethods
 
         # Defines a builder method for an embeds_one relation. This is
@@ -64,8 +74,7 @@ module Mongoid
         # @since 2.0.0.rc.1
         def builder(name, metadata)
           re_define_method("build_#{name}") do |*args|
-            attributes, options = parse_args(*args)
-            document = Factory.build(metadata.klass, attributes, options)
+            document = build_document(metadata, *args)
             _building do
               child = send("#{name}=", document)
               child.run_callbacks(:build)
@@ -89,8 +98,7 @@ module Mongoid
         # @since 2.0.0.rc.1
         def creator(name, metadata)
           re_define_method("create_#{name}") do |*args|
-            attributes, options = parse_args(*args)
-            document = Factory.build(metadata.klass, attributes, options)
+            document = build_document(metadata, *args)
             doc = send("#{name}=", document)
             doc.save
             save if new_record? && metadata.stores_foreign_key?

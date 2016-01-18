@@ -54,7 +54,7 @@ module Mongoid
           if ancestors.include?(Mongoid::Versioning)
             raise Errors::VersioningNotOnRoot.new(self)
           end
-          meta = characterize(name, Embedded::In, options, &block)
+          meta = characterize(name, Embedded::In, nil, options, &block)
           self.embedded = true
           relate(name, meta)
           builder(name, meta).creator(name, meta)
@@ -82,7 +82,7 @@ module Mongoid
         # @param [ Hash ] options The relation options.
         # @param [ Proc ] block Optional block for defining extensions.
         def embeds_many(name, options = {}, &block)
-          meta = characterize(name, Embedded::Many, options, &block)
+          meta = characterize(name, Embedded::Many, nil, options, &block)
           self.cyclic = true if options[:cyclic]
           relate(name, meta)
           embed(name, meta)
@@ -110,7 +110,7 @@ module Mongoid
         # @param [ Hash ] options The relation options.
         # @param [ Proc ] block Optional block for defining extensions.
         def embeds_one(name, options = {}, &block)
-          meta = characterize(name, Embedded::One, options, &block)
+          meta = characterize(name, Embedded::One, nil, options, &block)
           self.cyclic = true if options[:cyclic]
           relate(name, meta)
           embed(name, meta)
@@ -138,7 +138,7 @@ module Mongoid
         # @param [ Hash ] options The relation options.
         # @param [ Proc ] block Optional block for defining extensions.
         def belongs_to(name, options = {}, &block)
-          meta = reference_one_to_one(name, options, Referenced::In, &block)
+          meta = reference_one_to_one(name, nil, options, Referenced::In, &block)
           aliased_fields[name.to_s] = meta.foreign_key
           touchable(meta)
           add_counter_cache_callbacks(meta) if meta.counter_cached?
@@ -164,7 +164,7 @@ module Mongoid
         # @param [ Hash ] options The relation options.
         # @param [ Proc ] block Optional block for defining extensions.
         def has_many(name, options = {}, &block)
-          meta = characterize(name, Referenced::Many, options, &block)
+          meta = characterize(name, Referenced::Many, nil, options, &block)
           relate(name, meta)
           ids_getter(name, meta).ids_setter(name, meta)
           reference(meta)
@@ -194,7 +194,7 @@ module Mongoid
         #
         # @since 2.0.0.rc.1
         def has_and_belongs_to_many(name, options = {}, &block)
-          meta = characterize(name, Referenced::ManyToMany, options, &block)
+          meta = characterize(name, Referenced::ManyToMany, nil, options, &block)
           relate(name, meta)
           reference(meta, Array)
           autosave(meta)
@@ -221,8 +221,11 @@ module Mongoid
         # @param [ Symbol ] name The name of the relation.
         # @param [ Hash ] options The relation options.
         # @param [ Proc ] block Optional block for defining extensions.
-        def has_one(name, options = {}, &block)
-          reference_one_to_one(name, options, Referenced::One, &block)
+        def has_one(*args, &block)
+          options = args.last.is_a?(::Hash) ? args.pop : {}
+          name, scope = args.take(2)
+
+          reference_one_to_one(name, scope, options, Referenced::One, &block)
         end
 
         private
@@ -240,8 +243,8 @@ module Mongoid
         # @param [ Proc ] block Optional block for defining extensions.
         #
         # @return [ Metadata ] The metadata for the relation.
-        def characterize(name, relation, options, &block)
-          Metadata.new({
+        def characterize(name, relation, scope, options, &block)
+          Metadata.new(scope, {
             relation: relation,
             extend: create_extension_module(name, &block),
             inverse_class_name: self.name,
@@ -332,8 +335,8 @@ module Mongoid
         # @return [ Class ] The model class.
         #
         # @since 3.0.0
-        def reference_one_to_one(name, options, relation, &block)
-          meta = characterize(name, relation, options, &block)
+        def reference_one_to_one(name, scope, options, relation, &block)
+          meta = characterize(name, relation, scope, options, &block)
           relate(name, meta)
           reference(meta)
           builder(name, meta).creator(name, meta).autosave(meta)

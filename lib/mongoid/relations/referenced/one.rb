@@ -127,6 +127,10 @@ module Mongoid
               crit = crit.where(metadata.type => type.name)
             end
 
+            if metadata.scope?
+              crit = crit.merge(metadata.scope)
+            end
+
             inverse_metadata = metadata.inverse_metadata(metadata.klass)
             if inverse_metadata.inverse_of_field
               crit = crit.any_in(inverse_metadata.inverse_of_field => [metadata.name, nil])
